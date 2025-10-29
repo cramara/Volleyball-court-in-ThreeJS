@@ -1,0 +1,5 @@
+{
+  "name": "Three.js Volleyball Court",
+  "description": "An interactive 3D representation of a volleyball court built with React, Three.js, and Tailwind CSS. Users can rotate, pan, and zoom to explore the scene.",
+  "requestFramePermissions": []
+}
