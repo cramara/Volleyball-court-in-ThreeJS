@@ -41,7 +41,7 @@ export const createCourtElements = (scene: THREE.Scene) => {
     scene.add(courtFloor);
 
     // Court Lines
-    const lineMaterial = new LineMaterial({ color: 0xE4A894, linewidth: 10 });
+    const lineMaterial = new LineMaterial({ color: 0xD49389, linewidth: 10 });
     const points = [];
     const halfW = COURT_WIDTH / 2;
     const halfL = COURT_LENGTH / 2;

@@ -20,8 +20,8 @@ export const createPlayer = (
     playerGroup.userData = { role, team, state: 'idle', home: { x, z }, returnHome: false };
 
     const bodyRadius = 0.16;
-    const shortHeight = 0.40;
-    const shortCenterY = shortHeight / 2;
+    const shortHeight = 0.30;
+    const shortCenterY = 0.45;
     const jerseyHeight = 0.80;
     const jerseyCenterY = shortHeight + jerseyHeight / 2;
 
@@ -35,7 +35,7 @@ export const createPlayer = (
     playerGroup.add(jersey);
 
     // Short (cylindre plus sombre)
-    const shortGeometry = new THREE.CylinderGeometry(bodyRadius * 0.95, bodyRadius * 0.95, shortHeight, 18);
+    const shortGeometry = new THREE.CylinderGeometry(bodyRadius * 1.05, bodyRadius * 1.05, shortHeight, 18);
     const shortMaterial = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
     const shortMesh = new THREE.Mesh(shortGeometry, shortMaterial);
     shortMesh.position.y = shortCenterY;
@@ -61,13 +61,13 @@ export const createPlayer = (
 
     const leftArm = new THREE.Mesh(armGeometry, armMaterial);
     leftArm.rotation.z = Math.PI / 2;
-    leftArm.position.set(-bodyRadius - armLength / 2, jerseyCenterY + 0.10, 0);
+    leftArm.position.set(-bodyRadius - armLength / 2, jerseyCenterY + 0.20, 0);
     leftArm.castShadow = true;
     playerGroup.add(leftArm);
 
     const rightArm = new THREE.Mesh(armGeometry, armMaterial);
     rightArm.rotation.z = -Math.PI / 2;
-    rightArm.position.set(bodyRadius + armLength / 2, jerseyCenterY + 0.10, 0);
+    rightArm.position.set(bodyRadius + armLength / 2, jerseyCenterY + 0.20, 0);
     rightArm.castShadow = true;
     playerGroup.add(rightArm);
 
@@ -104,10 +104,10 @@ export const createPlayer = (
     const sleeveMat = new THREE.MeshStandardMaterial({ color: teamColor, roughness: 0.6 });
     const sleeveL = new THREE.Mesh(sleeveGeometry, sleeveMat);
     sleeveL.rotation.z = Math.PI / 2;
-    sleeveL.position.set(-bodyRadius - 0.2, jerseyCenterY + 0.15, 0);
+    sleeveL.position.set(-bodyRadius - 0.2, jerseyCenterY + 0.20, 0);
     const sleeveR = new THREE.Mesh(sleeveGeometry, sleeveMat);
     sleeveR.rotation.z = -Math.PI / 2;
-    sleeveR.position.set(bodyRadius + 0.2, jerseyCenterY + 0.15, 0);
+    sleeveR.position.set(bodyRadius + 0.2, jerseyCenterY + 0.20, 0);
     playerGroup.add(sleeveL);
     playerGroup.add(sleeveR);
 
