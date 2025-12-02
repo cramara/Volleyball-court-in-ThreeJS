@@ -129,6 +129,9 @@ export const createPlayer = (
     if (role === 'passeur') {
         playerGroup.rotation.y = team === 'team1' ? 0 : Math.PI;
     }
+    else {
+        playerGroup.rotation.y = team === 'team1' ? Math.PI : 0;
+    }
 
     return playerGroup;
 };
