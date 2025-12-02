@@ -8,6 +8,9 @@ import {
     POLE_HEIGHT,
     POLE_RADIUS
 } from '../../constants';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 
 export const createCourtElements = (scene: THREE.Scene) => {
     // Outer Ground (Dark Green)
@@ -22,10 +25,10 @@ export const createCourtElements = (scene: THREE.Scene) => {
     scene.add(ground);
 
     // Court Floor (Dark Yellow Sand)
-    const sandTexture = new THREE.TextureLoader().load('/assets/sand.jpg');
+    const sandTexture = new THREE.TextureLoader().load('/assets/pavement.png');
     sandTexture.wrapS = THREE.RepeatWrapping;
     sandTexture.wrapT = THREE.RepeatWrapping;
-    sandTexture.repeat.set(4, 8);
+    sandTexture.repeat.set(16, 32);
     const courtGeometry = new THREE.PlaneGeometry(COURT_WIDTH, COURT_LENGTH);
     const courtMaterial = new THREE.MeshStandardMaterial({
         roughness: 1.0,
@@ -38,31 +41,44 @@ export const createCourtElements = (scene: THREE.Scene) => {
     scene.add(courtFloor);
 
     // Court Lines
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+    const lineMaterial = new LineMaterial({ color: 0xE4A894, linewidth: 10 });
     const points = [];
     const halfW = COURT_WIDTH / 2;
     const halfL = COURT_LENGTH / 2;
     const lineY = 0.011;
 
+    function addSegment(a, b) {
+        points.push(a.x, a.y, a.z);
+        points.push(b.x, b.y, b.z);
+
+        // Add a NaN “break” so MeshLine doesn't connect segments
+        points.push(NaN, NaN, NaN);
+    }
+
     // Boundary lines
-    points.push(new THREE.Vector3(-halfW, lineY, -halfL), new THREE.Vector3(-halfW, lineY, halfL));
-    points.push(new THREE.Vector3(halfW, lineY, -halfL), new THREE.Vector3(halfW, lineY, halfL));
-    points.push(new THREE.Vector3(-halfW, lineY, -halfL), new THREE.Vector3(halfW, lineY, -halfL));
-    points.push(new THREE.Vector3(-halfW, lineY, halfL), new THREE.Vector3(halfW, lineY, halfL));
+    addSegment(new THREE.Vector3(-halfW, lineY, -halfL), new THREE.Vector3(-halfW, lineY, halfL));
+    addSegment(new THREE.Vector3(halfW, lineY, -halfL), new THREE.Vector3(halfW, lineY, halfL));
+    addSegment(new THREE.Vector3(-halfW, lineY, -halfL), new THREE.Vector3(halfW, lineY, -halfL));
+    addSegment(new THREE.Vector3(-halfW, lineY, halfL), new THREE.Vector3(halfW, lineY, halfL));
 
     // Center line
-    points.push(new THREE.Vector3(-halfW, lineY, 0), new THREE.Vector3(halfW, lineY, 0));
+    addSegment(new THREE.Vector3(-halfW, lineY, 0), new THREE.Vector3(halfW, lineY, 0));
 
     // Attack lines
-    points.push(new THREE.Vector3(-halfW, lineY, ATTACK_LINE_DISTANCE), new THREE.Vector3(halfW, lineY, ATTACK_LINE_DISTANCE));
-    points.push(new THREE.Vector3(-halfW, lineY, -ATTACK_LINE_DISTANCE), new THREE.Vector3(halfW, lineY, -ATTACK_LINE_DISTANCE));
+    addSegment(new THREE.Vector3(-halfW, lineY, ATTACK_LINE_DISTANCE), new THREE.Vector3(halfW, lineY, ATTACK_LINE_DISTANCE));
+    addSegment(new THREE.Vector3(-halfW, lineY, -ATTACK_LINE_DISTANCE), new THREE.Vector3(halfW, lineY, -ATTACK_LINE_DISTANCE));
 
-    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-    const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+    // Line geometry
+    const lineGeometry = new LineGeometry();
+    lineGeometry.setPositions(points);
+
+    // Create the Line2 object
+    const lines = new Line2(lineGeometry, lineMaterial);
+    lines.computeLineDistances();
     scene.add(lines);
 
     // Net Poles
-    const poleMaterial = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.2, metalness: 0.8 });
+    const poleMaterial = new THREE.MeshStandardMaterial({ color: 0x2E9DEA, roughness: 0.2, metalness: 0.6 });
     const poleGeometry = new THREE.CylinderGeometry(POLE_RADIUS, POLE_RADIUS, POLE_HEIGHT, 32);
 
     const pole1 = new THREE.Mesh(poleGeometry, poleMaterial);
