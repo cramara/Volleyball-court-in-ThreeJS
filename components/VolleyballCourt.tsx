@@ -9,6 +9,27 @@ import { GameState, selectNextReceiver, updateGameState, getBallTargetPosition }
 import { createBall, updateBallPosition } from './animation/BallAnimation';
 import { FirstPersonCameraState, updateFirstPersonCamera, toggleFirstPersonView, switchToPlayer, handleMouseMove } from './camera/FirstPersonCamera';
 
+function createTree(THREE: any) {
+    const tree = new THREE.Group();
+
+    // Tronc
+    const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1.5);
+    const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+    const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+    trunk.position.y = 0.75;
+
+    // Feuillage
+    const foliageGeometry = new THREE.ConeGeometry(1, 2, 12);
+    const foliageMaterial = new THREE.MeshStandardMaterial({ color: 0x2E8B57 });
+    const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+    foliage.position.y = 2.2;
+
+    tree.add(trunk);
+    tree.add(foliage);
+
+    return tree;
+}
+
 const PLAYER_THROW_HEIGHT = 1.6;
 const CROSS_SPEED = 0.01;
 
@@ -25,6 +46,67 @@ const VolleyballCourt: React.FC = () => {
 
         // Création des éléments du terrain
         const { sandTexture, lineGeometry, lineMaterial } = createCourtElements(scene);
+
+        // === Ajout de 3 arbres de chaque côté ===
+        const leftPositions = [-8, 0, 8];
+        const rightPositions = [-8, 0, 8];
+
+        leftPositions.forEach((z) => {
+            const tree = createTree(THREE);
+            tree.position.set(-6, 0, z); // côté gauche
+            scene.add(tree);
+        });
+
+        rightPositions.forEach((z) => {
+            const tree = createTree(THREE);
+            tree.position.set(6, 0, z); // côté droit
+            scene.add(tree);
+        });
+        // Lumière principale
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // couleur blanche, intensité 1
+        directionalLight.position.set(10, 20, 10); // position de la lumière
+        scene.add(directionalLight);
+
+        // Lumière ambiante pour adoucir les ombres
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+
+        // Vérifie que le ref est défini
+        if (mountRef.current) {
+            const sliderContainer = document.createElement('div');
+            sliderContainer.style.position = 'absolute';
+            sliderContainer.style.top = '10px';
+            sliderContainer.style.right = '10px';
+            sliderContainer.style.backgroundColor = 'rgba(14, 0, 0, 0.7)';
+            sliderContainer.style.zIndex = '10';
+            sliderContainer.style.padding = '5px 10px';
+            sliderContainer.style.borderRadius = '5px';
+            sliderContainer.style.pointerEvents = 'auto';
+
+            const label = document.createElement('label');
+            label.innerText = 'Luminosity: ';
+
+            const slider = document.createElement('input');
+            slider.type = 'range';
+            slider.min = '-1';
+            slider.max = '2';
+            slider.step = '0.01';
+            slider.value = '1';
+
+            // Stop propagation pour que OrbitControls ne capte pas le clic
+            slider.addEventListener('mousedown', (e) => e.stopPropagation());
+            slider.addEventListener('input', (e) => {
+                const value = parseFloat((e.target as HTMLInputElement).value);
+                directionalLight.intensity = value;
+            });
+
+            label.appendChild(slider);
+            sliderContainer.appendChild(label);
+
+            // ✅ Ajoute le slider au ref mountRef
+            mountRef.current.appendChild(sliderContainer);
+        }
+
 
         // Création des joueurs
         const { playersTeam1, playersTeam2 } = createPlayers(scene);
