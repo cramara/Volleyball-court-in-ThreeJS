@@ -12,6 +12,11 @@ const App: React.FC = () => {
         <p className="text-sm md:text-base text-gray-300">
           Drag to rotate, scroll to zoom, right-click to pan.
         </p>
+        <p className="text-xs md:text-sm text-gray-400 mt-1">
+          Press <kbd className="px-1 py-0.5 bg-gray-800 rounded">V</kbd> to toggle first-person view. 
+          Left/Right arrows or keys 1-9 to switch players. 
+          In first-person view, move the mouse to look around (click on the canvas if needed).
+        </p>
       </header>
       <VolleyballCourt />
     </div>

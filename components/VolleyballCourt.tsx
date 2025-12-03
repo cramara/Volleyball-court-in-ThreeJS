@@ -7,6 +7,7 @@ import { updateJump, updateReturnHome } from './players/PlayerAnimations';
 import { findSetter, getTeamSide } from './game/GameHelpers';
 import { GameState, selectNextReceiver, updateGameState, getBallTargetPosition } from './game/GameLogic';
 import { createBall, updateBallPosition } from './animation/BallAnimation';
+import { FirstPersonCameraState, updateFirstPersonCamera, toggleFirstPersonView, switchToPlayer, handleMouseMove } from './camera/FirstPersonCamera';
 
 const PLAYER_THROW_HEIGHT = 1.6;
 const CROSS_SPEED = 0.01;
@@ -27,6 +28,17 @@ const VolleyballCourt: React.FC = () => {
 
         // Création des joueurs
         const { playersTeam1, playersTeam2 } = createPlayers(scene);
+        const allPlayers = [...playersTeam1, ...playersTeam2];
+
+        // État de la caméra première personne
+        const firstPersonState: FirstPersonCameraState = {
+            enabled: false,
+            targetPlayer: null,
+            controls: controls,
+            yaw: 0,
+            pitch: 0,
+            sensitivity: 0.002
+        };
 
         // Création de la balle
         const ball = createBall(scene);
@@ -85,7 +97,11 @@ const VolleyballCourt: React.FC = () => {
             playersTeam1.forEach(updateReturnHome);
             playersTeam2.forEach(updateReturnHome);
 
-            controls.update();
+            updateFirstPersonCamera(camera, firstPersonState);
+
+            if (!firstPersonState.enabled) {
+                controls.update();
+            }
             renderer.render(scene, camera);
         };
         animate();
@@ -93,8 +109,65 @@ const VolleyballCourt: React.FC = () => {
         // Gestion du redimensionnement
         const removeResizeHandler = setupResizeHandler(currentMount, camera, renderer);
 
+        // Gestion des contrôles clavier pour la vue première personne
+        let currentPlayerIndex = 0;
+        const handleKeyPress = (event: KeyboardEvent) => {
+            if (event.key === 'v' || event.key === 'V') {
+                toggleFirstPersonView(camera, firstPersonState, controls, allPlayers, renderer);
+                if (firstPersonState.enabled && firstPersonState.targetPlayer) {
+                    currentPlayerIndex = allPlayers.indexOf(firstPersonState.targetPlayer);
+                }
+            } else if (firstPersonState.enabled) {
+                if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                    if (event.key === 'ArrowLeft') {
+                        currentPlayerIndex = (currentPlayerIndex - 1 + allPlayers.length) % allPlayers.length;
+                    } else {
+                        currentPlayerIndex = (currentPlayerIndex + 1) % allPlayers.length;
+                    }
+                    switchToPlayer(camera, firstPersonState, allPlayers[currentPlayerIndex]);
+                } else if (event.key >= '1' && event.key <= '9') {
+                    const index = parseInt(event.key) - 1;
+                    if (index < allPlayers.length) {
+                        currentPlayerIndex = index;
+                        switchToPlayer(camera, firstPersonState, allPlayers[index]);
+                    }
+                }
+            }
+        };
+
+        // Gestion des mouvements de la souris pour la vue première personne
+        const handleMouseMoveEvent = (event: MouseEvent) => {
+            handleMouseMove(event, firstPersonState, renderer);
+        };
+
+        // Gestion de la libération du pointer lock
+        const handlePointerLockChange = () => {
+            if (document.pointerLockElement !== renderer.domElement && firstPersonState.enabled) {
+                firstPersonState.enabled = false;
+                firstPersonState.targetPlayer = null;
+                controls.enabled = true;
+            }
+        };
+
+        // Gestion du clic pour activer le pointer lock en mode première personne
+        const handleCanvasClick = () => {
+            if (firstPersonState.enabled && document.pointerLockElement !== renderer.domElement) {
+                renderer.domElement.requestPointerLock();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        document.addEventListener('mousemove', handleMouseMoveEvent);
+        document.addEventListener('pointerlockchange', handlePointerLockChange);
+        renderer.domElement.addEventListener('click', handleCanvasClick);
+
         // Nettoyage
         return () => {
+            window.removeEventListener('keydown', handleKeyPress);
+            document.removeEventListener('mousemove', handleMouseMoveEvent);
+            document.removeEventListener('pointerlockchange', handlePointerLockChange);
+            renderer.domElement.removeEventListener('click', handleCanvasClick);
+            document.exitPointerLock();
             removeResizeHandler();
             if (currentMount) {
                 currentMount.removeChild(renderer.domElement);
