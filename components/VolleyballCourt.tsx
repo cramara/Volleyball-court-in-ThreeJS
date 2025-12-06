@@ -30,6 +30,52 @@ function createTree(THREE: any) {
     return tree;
 }
 
+export const createVoxelBench = (scene: THREE.Scene, x: number, z: number, rotationY: number = 0) => {
+    const benchGroup = new THREE.Group();
+
+    // Material
+    const woodMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 }); // Brown
+    const legMaterial = new THREE.MeshLambertMaterial({ color: 0x444444 });  // Grey
+
+    // Create the bench
+    // Width: 3, Height: 0.2, Deep: 1
+    const seatGeo = new THREE.BoxGeometry(2, 0.2, 1);
+    const seat = new THREE.Mesh(seatGeo, woodMaterial);
+    seat.position.y = 0.6;
+    seat.castShadow = true;
+    seat.receiveShadow = true;
+    benchGroup.add(seat);
+
+    // Bench Back
+    const backrestGeo = new THREE.BoxGeometry(2, 0.6, 0.2);
+    const backrest = new THREE.Mesh(backrestGeo, woodMaterial);
+    backrest.position.set(0, 0.7, -0.4);
+    backrest.castShadow = true;
+    backrest.receiveShadow = true;
+    benchGroup.add(backrest);
+
+    // Left foot
+    const legGeo = new THREE.BoxGeometry(0.3, 0.6, 0.8);
+    const legLeft = new THREE.Mesh(legGeo, legMaterial);
+    legLeft.position.set(-0.7, 0.3, 0);
+    legLeft.castShadow = true;
+    legLeft.receiveShadow = true;
+    benchGroup.add(legLeft);
+
+    // Right foot
+    const legRight = new THREE.Mesh(legGeo, legMaterial);
+    legRight.position.set(0.7, 0.3, 0);
+    legRight.castShadow = true;
+    legRight.receiveShadow = true;
+    benchGroup.add(legRight);
+
+    // Position and rotation
+    benchGroup.position.set(x, 0, z);
+    benchGroup.rotation.y = rotationY;
+
+    scene.add(benchGroup);
+};
+
 const PLAYER_THROW_HEIGHT = 1.6;
 const CROSS_SPEED = 0.01;
 
@@ -107,6 +153,13 @@ const VolleyballCourt: React.FC = () => {
             mountRef.current.appendChild(sliderContainer);
         }
 
+        // Bench Position on the left
+        createVoxelBench(scene, -6, -4, Math.PI / 2);
+        createVoxelBench(scene, -6, 4, Math.PI / 2);
+
+        // Bench Position on the right
+        createVoxelBench(scene, 6, -4, -Math.PI / 2);
+        createVoxelBench(scene, 6, 4, -Math.PI / 2);
 
         // Création des joueurs
         const { playersTeam1, playersTeam2 } = createPlayers(scene);

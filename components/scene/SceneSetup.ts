@@ -11,8 +11,8 @@ export interface SceneSetup {
 export const createSceneSetup = (container: HTMLDivElement): SceneSetup => {
     // Scene setup
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a2a);
-    scene.fog = new THREE.Fog(0x0a0a2a, 20, 50);
+    scene.background = new THREE.Color(0x87CEEB);
+    scene.fog = new THREE.Fog(0x87CEEB, 30, 90);
 
     // Camera setup
     const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
@@ -51,6 +51,15 @@ export const createSceneSetup = (container: HTMLDivElement): SceneSetup => {
     directionalLight.shadow.camera.top = 20;
     directionalLight.shadow.camera.bottom = -20;
     scene.add(directionalLight);
+
+    // Ground
+    const groundGeo = new THREE.PlaneGeometry(200, 200);
+    const groundMat = new THREE.MeshLambertMaterial({ color: 0x006400 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.1;
+    ground.receiveShadow = true;
+    scene.add(ground);
 
     return { scene, camera, renderer, controls };
 };
