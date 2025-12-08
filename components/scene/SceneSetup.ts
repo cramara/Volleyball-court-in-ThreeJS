@@ -1,11 +1,14 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
 
 export interface SceneSetup {
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
     renderer: THREE.WebGLRenderer;
     controls: OrbitControls;
+    sky: Sky;
+    sunLight: THREE.DirectionalLight;
 }
 
 export const createSceneSetup = (container: HTMLDivElement): SceneSetup => {
@@ -36,21 +39,26 @@ export const createSceneSetup = (container: HTMLDivElement): SceneSetup => {
     controls.target.set(0, 0, 0);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-    scene.add(ambientLight);
+    const sky = new Sky();
+    sky.scale.setScalar(450000);
+    scene.add(sky);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
-    directionalLight.position.set(-15, 20, 10);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 50;
-    directionalLight.shadow.camera.left = -20;
-    directionalLight.shadow.camera.right = 20;
-    directionalLight.shadow.camera.top = 20;
-    directionalLight.shadow.camera.bottom = -20;
-    scene.add(directionalLight);
+    const skyUniforms = sky.material.uniforms;
+
+    // Atmosphere settings
+    skyUniforms['turbidity'].value = 3;
+    skyUniforms['rayleigh'].value = 1.5;
+    skyUniforms['mieCoefficient'].value = 0.005;
+    skyUniforms['mieDirectionalG'].value = 0.7;
+
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.set(2048, 2048);
+    sunLight.shadow.camera.left = -200;
+    sunLight.shadow.camera.right = 200;
+    sunLight.shadow.camera.top = 200;
+    sunLight.shadow.camera.bottom = -200;
+    scene.add(sunLight);
 
     // Ground
     const groundGeo = new THREE.PlaneGeometry(200, 200);
@@ -61,7 +69,7 @@ export const createSceneSetup = (container: HTMLDivElement): SceneSetup => {
     ground.receiveShadow = true;
     scene.add(ground);
 
-    return { scene, camera, renderer, controls };
+    return { scene, camera, renderer, controls, sky, sunLight };
 };
 
 export const setupResizeHandler = (

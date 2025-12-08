@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
+import GUI from 'lil-gui';
 import { createSceneSetup, setupResizeHandler } from './scene/SceneSetup';
 import { createCourtElements } from './court/CourtElements';
 import { createPlayers } from './players/Player';
@@ -76,8 +77,30 @@ export const createVoxelBench = (scene: THREE.Scene, x: number, z: number, rotat
     scene.add(benchGroup);
 };
 
+
 const PLAYER_THROW_HEIGHT = 1.6;
 const CROSS_SPEED = 0.01;
+
+const sunPosition = new THREE.Vector3();
+
+const sunControls = {
+    play: true,
+    speed: 1.0,
+    t: 0.0,
+    intensity: 1.2,
+};
+
+const gui = new GUI();
+
+// --- Animation ---
+gui.add(sunControls, 'play').name('Play / Pause Sun');
+gui.add(sunControls, 'speed', 0, 5, 0.01).name('Time Speed');
+
+// --- Manual sun position ---
+gui.add(sunControls, 't', 0, 1, 0.0001).name('Sun Position');
+
+// --- Lighting ---
+gui.add(sunControls, 'intensity', 0, 3, 0.01).name('Sun Intensity');
 
 const VolleyballCourt: React.FC = () => {
     const mountRef = useRef<HTMLDivElement>(null);
@@ -88,10 +111,40 @@ const VolleyballCourt: React.FC = () => {
         const currentMount = mountRef.current;
 
         // Configuration de la scène
-        const { scene, camera, renderer, controls } = createSceneSetup(currentMount);
+        const { scene, camera, renderer, controls, sky, sunLight } = createSceneSetup(currentMount);
 
         // Création des éléments du terrain
         const { sandTexture, lineGeometry, lineMaterial } = createCourtElements(scene);
+
+        // Elevation (altitude) — angle above horizon
+        // Azimuth — angle along the horizon
+        function updateSun(elevationDeg, azimuthDeg) {
+            const phi = THREE.MathUtils.degToRad(90 - elevationDeg);
+            const theta = THREE.MathUtils.degToRad(azimuthDeg);
+
+            sunPosition.setFromSphericalCoords(1, phi, theta);
+
+            sunLight.position.copy(sunPosition);
+            sky.material.uniforms['sunPosition'].value.copy(sunPosition);
+        }
+
+        let time = 0;
+
+        function animateSun(delta) {
+            if (sunControls.play) {
+                time += delta * sunControls.speed * 0.1;
+                sunControls.t = time % 1;
+            }
+
+            const t = sunControls.t;
+
+            // Sun path:
+            const elevation = Math.sin(t * Math.PI) * 60;  // 0 → 60° → 0
+            const azimuth = 90 - t * 360;
+
+            updateSun(elevation, azimuth);
+            sunLight.intensity = sunControls.intensity;
+        }
 
         // === Ajout de 3 arbres de chaque côté ===
         const leftPositions = [-8, 0, 8];
@@ -108,50 +161,6 @@ const VolleyballCourt: React.FC = () => {
             tree.position.set(6, 0, z); // côté droit
             scene.add(tree);
         });
-        // Lumière principale
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // couleur blanche, intensité 1
-        directionalLight.position.set(10, 20, 10); // position de la lumière
-        scene.add(directionalLight);
-
-        // Lumière ambiante pour adoucir les ombres
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-        scene.add(ambientLight);
-
-        // Vérifie que le ref est défini
-        if (mountRef.current) {
-            const sliderContainer = document.createElement('div');
-            sliderContainer.style.position = 'absolute';
-            sliderContainer.style.top = '10px';
-            sliderContainer.style.right = '10px';
-            sliderContainer.style.backgroundColor = 'rgba(14, 0, 0, 0.7)';
-            sliderContainer.style.zIndex = '10';
-            sliderContainer.style.padding = '5px 10px';
-            sliderContainer.style.borderRadius = '5px';
-            sliderContainer.style.pointerEvents = 'auto';
-
-            const label = document.createElement('label');
-            label.innerText = 'Luminosity: ';
-
-            const slider = document.createElement('input');
-            slider.type = 'range';
-            slider.min = '-1';
-            slider.max = '2';
-            slider.step = '0.01';
-            slider.value = '1';
-
-            // Stop propagation pour que OrbitControls ne capte pas le clic
-            slider.addEventListener('mousedown', (e) => e.stopPropagation());
-            slider.addEventListener('input', (e) => {
-                const value = parseFloat((e.target as HTMLInputElement).value);
-                directionalLight.intensity = value;
-            });
-
-            label.appendChild(slider);
-            sliderContainer.appendChild(label);
-
-            // ✅ Ajoute le slider au ref mountRef
-            mountRef.current.appendChild(sliderContainer);
-        }
 
         // Bench Position on the left
         createVoxelBench(scene, -6, -4, Math.PI / 2);
@@ -199,9 +208,14 @@ const VolleyballCourt: React.FC = () => {
             legType: 'cross'
         };
 
+        const clock = new THREE.Clock();
+
         // Boucle d'animation
         const animate = () => {
             requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+            animateSun(delta);
 
             t += legSpeed;
             if (t >= 1) {
