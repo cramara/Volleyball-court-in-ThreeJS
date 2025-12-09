@@ -24,15 +24,15 @@ export const createCourtElements = (scene: THREE.Scene) => {
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Court Floor (Dark Yellow Sand)
-    const sandTexture = new THREE.TextureLoader().load('/assets/pavement.png');
-    sandTexture.wrapS = THREE.RepeatWrapping;
-    sandTexture.wrapT = THREE.RepeatWrapping;
-    sandTexture.repeat.set(16, 32);
+    // Court Floor
+    const pavementTexture = new THREE.TextureLoader().load('/assets/pavement.png');
+    pavementTexture.wrapS = THREE.RepeatWrapping;
+    pavementTexture.wrapT = THREE.RepeatWrapping;
+    pavementTexture.repeat.set(16, 32);
     const courtGeometry = new THREE.PlaneGeometry(COURT_WIDTH, COURT_LENGTH);
     const courtMaterial = new THREE.MeshStandardMaterial({
         roughness: 1.0,
-        map: sandTexture
+        map: pavementTexture
     });
     const courtFloor = new THREE.Mesh(courtGeometry, courtMaterial);
     courtFloor.rotation.x = -Math.PI / 2;
@@ -119,7 +119,7 @@ export const createCourtElements = (scene: THREE.Scene) => {
         }
     );
 
-    return { sandTexture, lineGeometry, lineMaterial };
+    return { sandTexture: pavementTexture, lineGeometry, lineMaterial };
 };
 
 const createFallbackNet = (scene: THREE.Scene) => {
